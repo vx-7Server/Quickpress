@@ -31,4 +31,3 @@ def check_otp_sms(phone: str, code: str) -> bool:
     except TwilioRestException:
         return False
     return result.status == "approved"
-EOF
