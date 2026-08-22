@@ -187,4 +187,3 @@ async def logout(payload: LogoutRequest, user: User = Depends(current_user)) -> 
     await refresh_tokens.revoke_all_for_user(user.id)
     revoke_refresh_tokens(user.firebase_uid)
     return {"ok": True}
-EOF
