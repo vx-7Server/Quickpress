@@ -23,13 +23,11 @@ class Settings(BaseSettings):
 
     # --- Firebase Admin ----------------------------------------------
     firebase_project_id: str = ""
-    # Either a path to the service-account JSON or the raw JSON itself.
     firebase_credentials_file: str = ""
     firebase_credentials_json: str = ""
 
     # --- JWT ----------------------------------------------------------
     jwt_secret: str = ""
-    # Optional dedicated refresh secret; falls back to jwt_secret when unset.
     jwt_refresh_secret: str = ""
     jwt_algorithm: str = "HS256"
     access_token_ttl_minutes: int = 30
@@ -50,32 +48,19 @@ class Settings(BaseSettings):
     twilio_verify_service_sid: str = ""
 
     # --- Test-mode phone login (dev/staging only, never in production) ----
-    # When customer_auth_mode is "test" or "development" AND customer_test_otp
-    # is set, /api/auth/phone/test-verify accepts that fixed code for ANY
-    # phone number, bypassing Firebase entirely. This endpoint 404s outright
-    # whenever app_env == "production", regardless of these two values, so a
-    # stray env var can't accidentally open it on a live deploy.
     customer_auth_mode: str = "production"
     customer_test_otp: str = ""
 
-    # --- Razorpay (Phase 5 · Sprint 5.6) ---------------------------------
-    # Both the key id and the secret come from the environment. Nothing is
-    # hardcoded, so a production deploy cannot accidentally ship a test key.
+    # --- Razorpay (Phase 5 - Sprint 5.6) ---------------------------------
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""
 
-
     # --- Google Maps Platform --------------------------------------------
-    # Server-side key (Geocoding, Places, Routes, Distance Matrix). NEVER sent
-    # to the browser. `google_api_key` stays as a legacy fallback.
     google_maps_server_api_key: str = ""
     google_api_key: str = ""
-    # Browser/render key — exposed to the frontends as VITE_GOOGLE_MAPS_API_KEY.
     google_maps_api_key: str = ""
-    # Default serviceable radius used by /api/maps/delivery-area.
     delivery_radius_km: float = 8.0
-
 
     @property
     def cors_origin_list(self) -> List[str]:
@@ -99,7 +84,6 @@ class Settings(BaseSettings):
 
     @property
     def maps_server_key(self) -> str:
-        """Server-side Maps key, preferring the dedicated server key."""
         return self.google_maps_server_api_key.strip() or self.google_api_key.strip()
 
     @property
@@ -124,7 +108,6 @@ class Settings(BaseSettings):
 
     @property
     def test_otp_enabled(self) -> bool:
-        """Never true in production, no matter what the other two vars say."""
         if self.app_env == "production":
             return False
         return self.customer_auth_mode.strip().lower() in ("test", "development") and bool(
@@ -134,24 +117,15 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Load settings and warn loudly on an incomplete production configuration.
-
-    We log rather than raise so that the server process stays alive and Render
-    can route health-check / API traffic even while env-var issues are being
-    fixed in the dashboard.  The missing vars are clearly visible in Render logs.
-    """
     settings = Settings()
     if settings.app_env == "production":
         missing = []
         if not settings.jwt_secret.strip():
             missing.append("JWT_SECRET")
-        # A production deploy must talk to real MongoDB Atlas — never silently
-        # degrade to the in-memory preview store.
         if not settings.mongodb_uri.strip():
             missing.append("MONGODB_URI")
         if not settings.mongodb_db_name.strip():
             missing.append("MONGODB_DB_NAME")
-        # Wildcard / localhost CORS is not acceptable with credentials enabled.
         origins = settings.cors_origin_list
         if not origins or any(
             o == "*" or "localhost" in o or "127.0.0.1" in o for o in origins
@@ -159,8 +133,9 @@ def get_settings() -> Settings:
             missing.append("CORS_ORIGINS (explicit https frontend origins)")
         if missing:
             _log.warning(
-                "QUICKPRESS PRODUCTION CONFIG WARNING — missing/invalid env vars: %s  "
-                "Fix these in the Render dashboard → Environment tab.",
+                "QUICKPRESS PRODUCTION CONFIG WARNING - missing/invalid env vars: %s  "
+                "Fix these in the Render dashboard - Environment tab.",
                 ", ".join(missing),
             )
     return settings
+PYEOF
