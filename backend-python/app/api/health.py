@@ -51,11 +51,9 @@ async def health() -> dict:
 
 _COUNTRIES = [
     {
-        "code": "IN",
-        "name": "India",
-        "dialCode": "+91",
-        "flag": "🇮🇳",
-        "phoneLengths": [10],
+        "code": "+91",
+        "label": "IN",
+        "digits": 10,
     }
 ]
 
