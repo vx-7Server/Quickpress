@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     otp_ttl_seconds: int = 60
     otp_max_sends_per_hour: int = 50
 
+    # --- Twilio Verify (phone OTP) ---------------------------------------
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_verify_service_sid: str = ""
+
     # --- Test-mode phone login (dev/staging only, never in production) ----
     # When customer_auth_mode is "test" or "development" AND customer_test_otp
     # is set, /api/auth/phone/test-verify accepts that fixed code for ANY
@@ -110,6 +115,14 @@ class Settings(BaseSettings):
         return bool(self.firebase_credentials_file.strip() or self.firebase_credentials_json.strip())
 
     @property
+    def twilio_configured(self) -> bool:
+        return bool(
+            self.twilio_account_sid.strip()
+            and self.twilio_auth_token.strip()
+            and self.twilio_verify_service_sid.strip()
+        )
+
+    @property
     def test_otp_enabled(self) -> bool:
         """Never true in production, no matter what the other two vars say."""
         if self.app_env == "production":
@@ -151,4 +164,4 @@ def get_settings() -> Settings:
                 ", ".join(missing),
             )
     return settings
-
+EOF
