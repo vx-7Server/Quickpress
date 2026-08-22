@@ -138,4 +138,3 @@ def get_settings() -> Settings:
                 ", ".join(missing),
             )
     return settings
-PYEOF
